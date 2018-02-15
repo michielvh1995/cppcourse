@@ -30,7 +30,7 @@ Surface::Surface( int a_Width, int a_Height ) :
 	m_Flags = OWNER;
 }
 
-Surface::Surface( char* a_File ) :
+Surface::Surface(char* a_File ) :
 	m_Buffer( NULL ),
 	m_Width( 0 ), m_Height( 0 )
 {
@@ -45,7 +45,7 @@ Surface::Surface( char* a_File ) :
 	LoadImage( a_File );
 }
 
-void Surface::LoadImage( char* a_File )
+void Surface::LoadImage( const char* a_File )
 {
 	FREE_IMAGE_FORMAT fif = FIF_UNKNOWN;
 	fif = FreeImage_GetFileType( a_File, 0 );
@@ -252,7 +252,7 @@ void Surface::BlendCopyTo( Surface* a_Dst, int a_X, int a_Y )
 	}
 }
 
-void Surface::SetChar( int c, const char const* c1, const char const* c2, const char const* c3, const char const* c4, const char const* c5 )
+void Surface::SetChar( int c, const char* c1, const char* c2, const char* c3, const char* c4, const char* c5 )
 {
 	strcpy( s_Font[c][0], c1 );
 	strcpy( s_Font[c][1], c2 );

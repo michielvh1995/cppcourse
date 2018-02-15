@@ -2,7 +2,7 @@ SRC=game.cpp surface.cpp template.cpp
 OBJ=game.o surface.o template.o
 
 WARNING=-Wall -Wno-strict-aliasing -Wno-write-strings -Wno-unused-function
-CFLAGS+=$(WARNING) -m64 -Ofast -flto -march=native -funroll-loops -fno-builtin
+CPPFLAGS+=$(WARNING) -m64 -Ofast -flto -march=native -funroll-loops -fno-builtin
 RM=rm
 LDFLAGS=-lSDL2 -lGLEW -lGLU -lGL -lfreeimage -lm -lstdc++
 
@@ -15,6 +15,8 @@ game: $(OBJ)
 clean:
 	-$(RM) $(OBJ) game
 
+install:
+	install -m755 game $(out)
 
 
 
