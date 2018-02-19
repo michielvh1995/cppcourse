@@ -12,6 +12,7 @@
 #endif
 
 #include "precomp.h"
+#include <chrono>
 
 namespace Tmpl8 { 
 
@@ -96,9 +97,6 @@ unsigned char* framedata = 0;
 int ACTWIDTH, ACTHEIGHT;
 static bool firstframe = true;
 
-Surface* surface = 0;
-Game* game = 0;
-SDL_Window* window = 0;
 
 #ifdef _MSC_VER
 void redirectIO()
@@ -236,18 +234,23 @@ int main( int argc, char **argv )
 #ifdef FULLSCREEN
 	window = SDL_CreateWindow( TEMPLATE_VERSION, 100, 100, SCRWIDTH, SCRHEIGHT, SDL_WINDOW_FULLSCREEN );
 #else
-	window = SDL_CreateWindow( TEMPLATE_VERSION, 100, 100, SCRWIDTH, SCRHEIGHT, SDL_WINDOW_SHOWN );
+	SDL_Window *window = SDL_CreateWindow( TEMPLATE_VERSION, 100, 100, SCRWIDTH, SCRHEIGHT, SDL_WINDOW_SHOWN );
 #endif
-	surface = new Surface( SCRWIDTH, SCRHEIGHT );
-	surface->Clear( 0 );
+	Surface surface( SCRWIDTH, SCRHEIGHT );
+	surface.Clear( 0 );
 	SDL_Renderer* renderer = SDL_CreateRenderer( window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
 	SDL_Texture* frameBuffer = SDL_CreateTexture( renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, SCRWIDTH, SCRHEIGHT );
 #endif
 	int exitapp = 0;
-	game = new Game();
-	game->SetTarget( surface );
+	Game game{};
+	game.SetTarget(&surface );
 	//timer t;
 	//t.reset();
+
+	std::chrono::high_resolution_clock  clock;
+
+	auto now = clock.now();
+
 	while (!exitapp) 
 	{
 	#ifdef ADVANCEDGL
@@ -257,16 +260,16 @@ int main( int argc, char **argv )
 		void* target = 0;
 		int pitch;
 		SDL_LockTexture( frameBuffer, NULL, &target, &pitch );
-		if (pitch == (surface->GetWidth() * 4))
+		if (pitch == (surface.GetWidth() * 4))
 		{
-			memcpy( target, surface->GetBuffer(), SCRWIDTH * SCRHEIGHT * 4 );
+			memcpy( target, surface.GetBuffer(), SCRWIDTH * SCRHEIGHT * 4 );
 		}
 		else
 		{
 			unsigned char* t = (unsigned char*)target;
 			for( int i = 0; i < SCRHEIGHT; i++ )
 			{
-				memcpy( t, surface->GetBuffer() + i * SCRWIDTH, SCRWIDTH * 4 );
+				memcpy( t, surface.GetBuffer() + i * SCRWIDTH, SCRWIDTH * 4 );
 				t += pitch;
 			}
 		}
@@ -276,13 +279,13 @@ int main( int argc, char **argv )
 	#endif
 		if (firstframe)
 		{
-			game->Init();
+			game.Init();
 			firstframe = false;
 		}
-		// calculate frame time and pass it to game->Tick
-                // TODO(arianvp): make timer
-                float elapsed = 0.1;
-		game->Tick(elapsed);
+		auto then = clock.now();
+		std::chrono::duration<double> diff = then-now;
+		game.Tick(diff.count());
+		now = clock.now();
 		//t.reset();
 		// event loop
 		SDL_Event event;
@@ -299,26 +302,28 @@ int main( int argc, char **argv )
 					exitapp = 1;
 					// find other keys here: http://sdl.beuc.net/sdl.wiki/SDLKey
 				}
-				game->KeyDown( event.key.keysym.scancode );
+				game.KeyDown( event.key.keysym.scancode );
 				break;
 			case SDL_KEYUP:
-				game->KeyUp( event.key.keysym.scancode );
+				game.KeyUp( event.key.keysym.scancode );
 				break;
 			case SDL_MOUSEMOTION:
-				game->MouseMove( event.motion.xrel, event.motion.yrel );
+				game.MouseMove( event.motion.xrel, event.motion.yrel );
 				break;
 			case SDL_MOUSEBUTTONUP:
-				game->MouseUp( event.button.button );
+				game.MouseUp( event.button.button );
 				break;
 			case SDL_MOUSEBUTTONDOWN:
-				game->MouseDown( event.button.button );
+				game.MouseDown( event.button.button );
 				break;
 			default:
 				break;
 			}
 		}
 	}
-	game->Shutdown();
+	SDL_DestroyRenderer(renderer);
+	SDL_DestroyWindow(window);
+	game.Shutdown();
 	SDL_Quit();
 	return 1;
 }
